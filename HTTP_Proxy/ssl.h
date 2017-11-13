@@ -41,41 +41,41 @@
 
 /*struct ACCEPT_DATA
 {
-	SecBuffer       InBuffers[ 2 ];
-	SecBuffer       OutBuffers[ 1 ];
+	SecBuffer		InBuffers[ 2 ];
+	SecBuffer		OutBuffers[ 1 ];
 
-	SECURITY_STATUS scRet;
+	SECURITY_STATUS	scRet;
 
 	bool			fInitContext;
-	bool            fDoRead;
+	bool			fDoRead;
 };
 
 struct CONNECT_DATA
 {
-	SecBuffer       InBuffers[ 2 ];
-	SecBuffer       OutBuffers[ 1 ];
+	SecBuffer		InBuffers[ 2 ];
+	SecBuffer		OutBuffers[ 1 ];
 
-	SECURITY_STATUS scRet;
+	SECURITY_STATUS	scRet;
 
-	bool            fDoRead;
+	bool			fDoRead;
 };*/
 
 struct ACCEPT_CONNECT_DATA
 {
-	SecBuffer       InBuffers[ 2 ];
-	SecBuffer       OutBuffers[ 1 ];
+	SecBuffer		InBuffers[ 2 ];
+	SecBuffer		OutBuffers[ 1 ];
 
-	SECURITY_STATUS scRet;
+	SECURITY_STATUS	scRet;
 
 	bool			fInitContext;
-	bool            fDoRead;
+	bool			fDoRead;
 };
 
 struct RECV_DATA
 {
-	SecBuffer       Buffers[ 4 ];
+	SecBuffer		Buffers[ 4 ];
 
-	SECURITY_STATUS scRet;
+	SECURITY_STATUS	scRet;
 };
 
 struct SEND_DATA
@@ -87,7 +87,7 @@ struct SEND_DATA
 
 struct SHUTDOWN_DATA
 {
-    SecBuffer       OutBuffers[ 1 ];
+    SecBuffer		OutBuffers[ 1 ];
 };
 
 struct SSL
@@ -121,8 +121,6 @@ void SSL_free( SSL *ssl );
 
 PCCERT_CONTEXT LoadPublicPrivateKeyPair( wchar_t *cer, wchar_t *key );
 PCCERT_CONTEXT LoadPKCS12( wchar_t *p12_file, wchar_t *password );
-
-extern PSecurityFunctionTableA g_pSSPI;
 
 extern PCCERT_CONTEXT g_pCertContext;
 

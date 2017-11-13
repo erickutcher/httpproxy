@@ -1487,6 +1487,7 @@ char HandleRequest( SOCKET_CONTEXT *context )
 				if ( ssl->sbIoBuffer <= ssl->cbIoBuffer )
 				{
 					ssl->sbIoBuffer += 2048;
+
 					if ( ssl->pbIoBuffer == NULL )
 					{
 						ssl->pbIoBuffer = ( PUCHAR )GlobalAlloc( GPTR, ssl->sbIoBuffer );
@@ -1552,7 +1553,7 @@ char HandleRequest( SOCKET_CONTEXT *context )
 
 				EnterCriticalSection( &context_list_cs );
 
-				DLL_AddNode( &context_list, &context_s->context_node, -1 );
+				DLL_AddNode( &g_context_list, &context_s->context_node, -1 );
 
 				EnableTimer( true );
 

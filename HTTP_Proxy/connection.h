@@ -131,7 +131,7 @@ struct SOCKET_CONTEXT
 
 	HEADER_INFO				header_info;
 
-	DoublyLinkedList		context_node;			// Self reference to the context_list.
+	DoublyLinkedList		context_node;			// Self reference to the g_context_list.
 
 	WSABUF					wsabuf_read;
 	WSABUF					wsabuf_write;
@@ -175,7 +175,7 @@ struct SOCKET_CONTEXT
 	bool					finish_writing;
 };
 
-SECURITY_STATUS WSAAPI SSL_WSAAccept( SOCKET_CONTEXT *context, bool &sent );
+SECURITY_STATUS SSL_WSAAccept( SOCKET_CONTEXT *context, bool &sent );
 SECURITY_STATUS SSL_WSAAccept_Reply( SOCKET_CONTEXT *context, bool &sent );
 SECURITY_STATUS SSL_WSAAccept_Response( SOCKET_CONTEXT *context, bool &sent );
 
@@ -183,8 +183,8 @@ SECURITY_STATUS SSL_WSAConnect( SOCKET_CONTEXT *context, char *host, bool &sent 
 SECURITY_STATUS SSL_WSAConnect_Response( SOCKET_CONTEXT *context, bool &sent );
 SECURITY_STATUS SSL_WSAConnect_Reply( SOCKET_CONTEXT *context, bool &sent );
 
-SECURITY_STATUS WSAAPI SSL_WSASend( SOCKET_CONTEXT *context, WSABUF *send_buf, bool &sent );
-SECURITY_STATUS WSAAPI SSL_WSARecv( SOCKET_CONTEXT *context, bool &sent );
+SECURITY_STATUS SSL_WSASend( SOCKET_CONTEXT *context, WSABUF *send_buf, bool &sent );
+SECURITY_STATUS SSL_WSARecv( SOCKET_CONTEXT *context, bool &sent );
 
 SECURITY_STATUS SSL_WSARecv_Decrypt( SSL *ssl, LPWSABUF lpBuffers, DWORD &lpNumberOfBytesDecrypted );
 
@@ -219,6 +219,6 @@ extern WSAEVENT g_hCleanupEvent[ 1 ];
 
 extern CRITICAL_SECTION context_list_cs;		// Guard access to the global context list.
 
-extern DoublyLinkedList *context_list;
+extern DoublyLinkedList *g_context_list;
 
 #endif

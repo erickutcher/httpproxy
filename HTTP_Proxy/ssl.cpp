@@ -37,14 +37,17 @@ unsigned char ssl_state = SSL_STATE_SHUTDOWN;
 CredHandle g_hCreds_server;
 CredHandle g_hCreds_client;
 
-void ResetCredentials()
+void ResetServerCredentials()
 {
 	if ( SecIsValidHandle( &g_hCreds_server ) )
 	{
 		g_pSSPI->FreeCredentialsHandle( &g_hCreds_server );
 		SecInvalidateHandle( &g_hCreds_server );
 	}
+}
 
+void ResetClientCredentials()
+{
 	if ( SecIsValidHandle( &g_hCreds_client ) )
 	{
 		g_pSSPI->FreeCredentialsHandle( &g_hCreds_client );
@@ -100,7 +103,8 @@ int SSL_library_uninit( void )
 
 	if ( ssl_state != SSL_STATE_SHUTDOWN )
 	{
-		ResetCredentials();
+		ResetServerCredentials();
+		ResetClientCredentials();
 
 		_SslEmptyCacheW( NULL, 0 );
 
@@ -114,6 +118,10 @@ int SSL_library_uninit( void )
 
 SSL *SSL_new( DWORD protocol, bool is_server )
 {
+	SCHANNEL_CRED SchannelCred;
+	TimeStamp tsExpiry;
+	SECURITY_STATUS scRet;
+
 	if ( g_hSecurity == NULL )
 	{
 		return NULL;
@@ -129,9 +137,6 @@ SSL *SSL_new( DWORD protocol, bool is_server )
 	{
 		if ( !SecIsValidHandle( &g_hCreds_server ) )
 		{
-			SCHANNEL_CRED SchannelCred;
-			TimeStamp tsExpiry;
-
 			_memzero( &SchannelCred, sizeof( SchannelCred ) );
 
 			SchannelCred.dwVersion = SCHANNEL_CRED_VERSION;
@@ -141,20 +146,20 @@ SSL *SSL_new( DWORD protocol, bool is_server )
 			SchannelCred.grbitEnabledProtocols = protocol;
 			SchannelCred.dwFlags = ( SCH_CRED_NO_SYSTEM_MAPPER | SCH_CRED_NO_DEFAULT_CREDS | SCH_CRED_REVOCATION_CHECK_CHAIN );
 
-			SECURITY_STATUS scRet = g_pSSPI->AcquireCredentialsHandleA(
-											NULL,
-											UNISP_NAME_A,
-											SECPKG_CRED_INBOUND,
-											NULL,
-											&SchannelCred,
-											NULL,
-											NULL,
-											&g_hCreds_server,
-											&tsExpiry );
+			scRet = g_pSSPI->AcquireCredentialsHandleA(
+							NULL,
+							UNISP_NAME_A,
+							SECPKG_CRED_INBOUND,
+							NULL,
+							&SchannelCred,
+							NULL,
+							NULL,
+							&g_hCreds_server,
+							&tsExpiry );
 
 			if ( scRet != SEC_E_OK )
 			{
-				ResetCredentials();
+				ResetServerCredentials();
 
 				GlobalFree( ssl );
 
@@ -166,10 +171,6 @@ SSL *SSL_new( DWORD protocol, bool is_server )
 	{
 		if ( !SecIsValidHandle( &g_hCreds_client ) )
 		{
-			SCHANNEL_CRED SchannelCred;
-			TimeStamp tsExpiry;
-			SECURITY_STATUS scRet;
-
 			_memzero( &SchannelCred, sizeof( SchannelCred ) );
 
 			SchannelCred.dwVersion = SCHANNEL_CRED_VERSION;
@@ -190,7 +191,7 @@ SSL *SSL_new( DWORD protocol, bool is_server )
 
 			if ( scRet != SEC_E_OK )
 			{
-				ResetCredentials();
+				ResetClientCredentials();
 
 				GlobalFree( ssl ); 
 				ssl = NULL;
@@ -259,7 +260,7 @@ void SSL_free( SSL *ssl )
 	GlobalFree( ssl );
 }
 
-SECURITY_STATUS WSAAPI SSL_WSAAccept( SOCKET_CONTEXT *context, bool &sent )
+SECURITY_STATUS SSL_WSAAccept( SOCKET_CONTEXT *context, bool &sent )
 {
 	SECURITY_STATUS scRet = SEC_E_INTERNAL_ERROR;
 
@@ -286,6 +287,7 @@ SECURITY_STATUS WSAAPI SSL_WSAAccept( SOCKET_CONTEXT *context, bool &sent )
 		if ( ssl->sbIoBuffer <= ssl->cbIoBuffer )
 		{
 			ssl->sbIoBuffer += 2048;
+
 			if ( ssl->pbIoBuffer == NULL )
 			{
 				ssl->pbIoBuffer = ( PUCHAR )GlobalAlloc( GPTR, ssl->sbIoBuffer );
@@ -726,6 +728,7 @@ SECURITY_STATUS SSL_WSAConnect_Response( SOCKET_CONTEXT *context, bool &sent )
 					if ( ssl->sbIoBuffer <= ssl->cbIoBuffer )
 					{
 						ssl->sbIoBuffer += 2048;
+
 						if ( ssl->pbIoBuffer == NULL )
 						{
 							ssl->pbIoBuffer = ( PUCHAR )GlobalAlloc( GPTR, ssl->sbIoBuffer );
@@ -1073,7 +1076,7 @@ SECURITY_STATUS SSL_WSAShutdown( SOCKET_CONTEXT *context, bool &sent )
 	return scRet;
 }
 
-SECURITY_STATUS WSAAPI SSL_WSASend( SOCKET_CONTEXT *context, WSABUF *send_buf, bool &sent )
+SECURITY_STATUS SSL_WSASend( SOCKET_CONTEXT *context, WSABUF *send_buf, bool &sent )
 {
 	SECURITY_STATUS scRet = SEC_E_INTERNAL_ERROR;
 
@@ -1164,7 +1167,7 @@ SECURITY_STATUS WSAAPI SSL_WSASend( SOCKET_CONTEXT *context, WSABUF *send_buf, b
 }
 
 
-SECURITY_STATUS WSAAPI SSL_WSARecv( SOCKET_CONTEXT *context, bool &sent )
+SECURITY_STATUS SSL_WSARecv( SOCKET_CONTEXT *context, bool &sent )
 {
 	sent = false;
 

@@ -59,15 +59,12 @@
 
 	typedef BOOL ( WINAPI *pCryptBinaryToStringA )( const BYTE *pbBinary, DWORD cbBinary, DWORD dwFlags, LPSTR pszString, DWORD *pcchString );
 
-
 	typedef BOOL ( WINAPI *pCryptMsgClose )( HCRYPTMSG hCryptMsg );
 	typedef BOOL ( WINAPI *pCertSetCertificateContextProperty )( PCCERT_CONTEXT pCertContext, DWORD dwPropId, DWORD dwFlags, const void *pvData );
 
 	typedef BOOL ( WINAPI *pCryptDecodeObjectEx )( DWORD dwCertEncodingType, LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags, PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo );
 	typedef BOOL ( WINAPI *pCryptStringToBinaryA )( LPCSTR pszString, DWORD cchString, DWORD dwFlags, BYTE *pbBinary, DWORD *pcbBinary, DWORD *pdwSkip, DWORD *pdwFlags );
 	typedef BOOL ( WINAPI *pCryptQueryObject )( DWORD dwObjectType, const void *pvObject, DWORD dwExpectedContentTypeFlags, DWORD dwExpectedFormatTypeFlags, DWORD dwFlags, DWORD *pdwMsgAndCertEncodingType, DWORD *pdwContentType, DWORD *pdwFormatType, HCERTSTORE *phCertStore, HCRYPTMSG *phMsg, const void **ppvContext );
-
-
 
 	extern pCertFindCertificateInStore	_CertFindCertificateInStore;
 	extern pCertCloseStore	_CertCloseStore;
@@ -77,18 +74,12 @@
 
 	extern pCryptBinaryToStringA	_CryptBinaryToStringA;
 
-
 	extern pCryptMsgClose		_CryptMsgClose;
 	extern pCertSetCertificateContextProperty	_CertSetCertificateContextProperty;
 
 	extern pCryptDecodeObjectEx	_CryptDecodeObjectEx;
 	extern pCryptStringToBinaryA	_CryptStringToBinaryA;
 	extern pCryptQueryObject	_CryptQueryObject;
-
-
-
-
-
 
 	extern unsigned char crypt32_state;
 

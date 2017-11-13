@@ -40,7 +40,7 @@ bool g_restart_server = false;
 
 bool in_server_thread = false;
 
-DoublyLinkedList *context_list = NULL;
+DoublyLinkedList *g_context_list = NULL;
 
 SOCKET_CONTEXT *listen_context = NULL;
 SOCKET_CONTEXT *listen_context_s = NULL;
@@ -100,7 +100,7 @@ DWORD WINAPI Timeout( LPVOID WorkThreadContext )
 		// Timeout() and HandleRequest() will deadlock if we don't use TryEnterCriticalSection.
 		if ( TryEnterCriticalSection( &context_list_cs ) == TRUE )
 		{
-			DoublyLinkedList *context_node = context_list;
+			DoublyLinkedList *context_node = g_context_list;
 
 			while ( context_node != NULL )
 			{
@@ -822,7 +822,7 @@ DWORD WINAPI IOCPConnection( LPVOID WorkThreadContext )
 				{
 					_WSASetEvent( g_hCleanupEvent[ 0 ] );
 
-					ExitThread( 0 );
+					_ExitThread( 0 );
 					return 0;
 				}
 
@@ -896,7 +896,7 @@ DWORD WINAPI IOCPConnection( LPVOID WorkThreadContext )
 				}
 
 				// Post another outstanding AcceptEx.
-				if ( ( proxy_type & PROXY_TYPE_HTTP ) && !CreateAcceptSocket( g_use_ipv6, proxy_type ) )
+				if ( ( proxy_type & PROXY_TYPE_HTTP ) && CreateAcceptSocket( g_use_ipv6, proxy_type ) != LA_STATUS_OK )
 				{
 					EnterCriticalSection( &console_cs );
 					SetConsoleTextAttribute( g_hOutput, FOREGROUND_RED | FOREGROUND_INTENSITY );
@@ -913,12 +913,12 @@ DWORD WINAPI IOCPConnection( LPVOID WorkThreadContext )
 
 					_WSASetEvent( g_hCleanupEvent[ 0 ] );
 
-					ExitThread( 0 );
+					_ExitThread( 0 );
 					return 0;
 				}
 
 				// Post another outstanding AcceptEx.
-				if ( ( proxy_type == PROXY_TYPE_HTTPS ) && !CreateAcceptSocket( g_use_ipv6_s, PROXY_TYPE_HTTPS ) )
+				if ( ( proxy_type == PROXY_TYPE_HTTPS ) && CreateAcceptSocket( g_use_ipv6_s, PROXY_TYPE_HTTPS ) != LA_STATUS_OK )
 				{
 					EnterCriticalSection( &console_cs );
 					SetConsoleTextAttribute( g_hOutput, FOREGROUND_RED | FOREGROUND_INTENSITY );
@@ -928,7 +928,7 @@ DWORD WINAPI IOCPConnection( LPVOID WorkThreadContext )
 
 					_WSASetEvent( g_hCleanupEvent[ 0 ] );
 
-					ExitThread( 0 );
+					_ExitThread( 0 );
 					return 0;
 				}
 			}
@@ -1079,13 +1079,13 @@ DWORD WINAPI IOCPConnection( LPVOID WorkThreadContext )
 					scRet = SSL_WSAConnect_Response( context, sent );
 				}
 
+				if ( !sent )
+				{
+					InterlockedDecrement( &context->pending_operations );
+				}
+
 				if ( scRet == SEC_E_OK )
 				{
-					if ( !sent )
-					{
-						InterlockedDecrement( &context->pending_operations );
-					}
-
 					EnterCriticalSection( &context->shared_request_info->context_cs );
 
 					// Post a read and then send the data.
@@ -1141,11 +1141,6 @@ DWORD WINAPI IOCPConnection( LPVOID WorkThreadContext )
 				else if ( scRet != SEC_I_CONTINUE_NEEDED && scRet != SEC_E_INCOMPLETE_MESSAGE && scRet != SEC_I_INCOMPLETE_CREDENTIALS )
 				{
 					// Have seen SEC_E_ILLEGAL_MESSAGE (for a bad target name in InitializeSecurityContext), SEC_E_BUFFER_TOO_SMALL, and SEC_E_MESSAGE_ALTERED.
-
-					if ( !sent )
-					{
-						InterlockedDecrement( &context->pending_operations );
-					}
 
 					BeginClose( context->relay_context, ( ( context->relay_context != NULL && context->relay_context->ssl != NULL ) ? IO_Shutdown : IO_Close ) );
 
@@ -1658,7 +1653,7 @@ DWORD WINAPI IOCPConnection( LPVOID WorkThreadContext )
 		}
 	}
 
-	ExitThread( 0 );
+	_ExitThread( 0 );
 	return 0;
 }
 
@@ -1923,13 +1918,13 @@ char CreateListenSocket( wchar_t *host, unsigned short port, bool &use_ipv6, uns
 	}
 
 	*listen_socket = CreateSocket( use_ipv6 );
-	if ( *listen_socket == INVALID_SOCKET)
+	if ( *listen_socket == INVALID_SOCKET )
 	{
 		goto CLEANUP;
 	}
 
 	nRet = _bind( *listen_socket, addrlocal->ai_addr, ( int )addrlocal->ai_addrlen );
-	if ( nRet == SOCKET_ERROR)
+	if ( nRet == SOCKET_ERROR )
 	{
 		goto CLEANUP;
 	}
@@ -2125,7 +2120,7 @@ SOCKET_CONTEXT *UpdateCompletionPort( SOCKET socket, bool is_listen_socket )
 
 				EnterCriticalSection( &context_list_cs );
 
-				DLL_AddNode( &context_list, &context->context_node, -1 );
+				DLL_AddNode( &g_context_list, &context->context_node, -1 );
 
 				EnableTimer( true );
 
@@ -2153,10 +2148,10 @@ void CleanupConnection( SOCKET_CONTEXT *context )
 		EnterCriticalSection( &context_list_cs );
 
 		// Remove from the global download list.
-		DLL_RemoveNode( &context_list, &context->context_node );
+		DLL_RemoveNode( &g_context_list, &context->context_node );
 
 		// Turn off our timer if there are no more connections.
-		if ( context_list == NULL )
+		if ( g_context_list == NULL )
 		{
 			EnableTimer( false );
 		}
@@ -2239,7 +2234,7 @@ void CleanupConnection( SOCKET_CONTEXT *context )
 // Free all context structures in the global list of context structures.
 void FreeContexts()
 {
-	DoublyLinkedList *context_node = context_list;
+	DoublyLinkedList *context_node = g_context_list;
 	DoublyLinkedList *del_context_node = NULL;
 
 	while ( context_node != NULL )
@@ -2250,9 +2245,7 @@ void FreeContexts()
 		CleanupConnection( ( SOCKET_CONTEXT * )del_context_node->data );
 	}
 
-	context_list = NULL;
-
-	return;
+	g_context_list = NULL;
 }
 
 void FreeListenContexts()
@@ -2282,6 +2275,4 @@ void FreeListenContexts()
 		GlobalFree( listen_context_s );
 		listen_context_s = NULL;
 	}
-
-	return;
 }
