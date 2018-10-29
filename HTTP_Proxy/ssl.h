@@ -1,6 +1,6 @@
 /*
 	HTTP Proxy can proxy HTTP and HTTPS connections.
-	Copyright (C) 2016-2017 Eric Kutcher
+	Copyright (C) 2016-2018 Eric Kutcher
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by

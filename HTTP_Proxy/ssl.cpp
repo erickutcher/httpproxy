@@ -1,6 +1,6 @@
 /*
 	HTTP Proxy can proxy HTTP and HTTPS connections.
-	Copyright (C) 2016-2017 Eric Kutcher
+	Copyright (C) 2016-2018 Eric Kutcher
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -775,6 +775,8 @@ SECURITY_STATUS SSL_WSAConnect_Response( SOCKET_CONTEXT *context, bool &sent )
 			}
 			else
 			{
+				sent = true;
+
 				// Do not post the ssl->cbIoBuffer size.
 				PostQueuedCompletionStatus( g_hIOCP, 0, ( ULONG_PTR )context, &context->overlapped_read );
 			}
@@ -923,6 +925,8 @@ SECURITY_STATUS SSL_WSAConnect_Reply( SOCKET_CONTEXT *context, bool &sent )
 						g_pSSPI->FreeContextBuffer( ssl->acd.OutBuffers[ 0 ].pvBuffer );
 						ssl->acd.OutBuffers[ 0 ].pvBuffer = NULL;
 					}
+
+					sent = true;
 
 					PostQueuedCompletionStatus( g_hIOCP, 0, ( ULONG_PTR )context, &context->overlapped_read );
 

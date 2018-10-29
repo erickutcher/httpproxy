@@ -1,6 +1,6 @@
 /*
 	HTTP Proxy can proxy HTTP and HTTPS connections.
-	Copyright (C) 2016-2017 Eric Kutcher
+	Copyright (C) 2016-2018 Eric Kutcher
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -1463,7 +1463,7 @@ int APIENTRY WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
 
 
 	EnterCriticalSection( &console_cs );
-	_wprintf( L"HTTP Proxy/Tunnel is made free under the GPLv3 license.\r\nVersion 1.0.0.1\r\nCopyright (c) 2016-2017 Eric Kutcher\r\n\r\n" );
+	_wprintf( L"HTTP Proxy/Tunnel is made free under the GPLv3 license.\r\nVersion 1.0.0.2\r\nCopyright (c) 2016-2018 Eric Kutcher\r\n\r\n" );
 	LeaveCriticalSection( &console_cs );
 
 
